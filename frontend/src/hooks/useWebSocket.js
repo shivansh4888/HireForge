@@ -1,28 +1,30 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 
 export function useWebSocket(jobId, onMessage) {
-  const ws      = useRef(null);
-  const onMsgRef = useRef(onMessage);
-  onMsgRef.current = onMessage;
-
-  const connect = useCallback(() => {
-    if (!jobId) return;
-    const WS_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001')
-      .replace('http', 'ws')
-      .replace('/api', '');
-
-    ws.current = new WebSocket(`${WS_URL}?jobId=${jobId}`);
-
-    ws.current.onmessage = (e) => {
-      try { onMsgRef.current(JSON.parse(e.data)); }
-      catch { /* ignore malformed */ }
-    };
-
-    ws.current.onerror = () => ws.current?.close();
-  }, [jobId]);
+  const handleMessage = useEffectEvent((payload) => {
+    onMessage?.(payload);
+  });
 
   useEffect(() => {
-    connect();
-    return () => ws.current?.close();
-  }, [connect]);
+    if (!jobId) {
+      return undefined;
+    }
+
+    const wsUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api')
+      .replace('http', 'ws')
+      .replace('/api', '');
+    const socket = new WebSocket(`${wsUrl}?jobId=${jobId}`);
+
+    socket.onmessage = (event) => {
+      try {
+        handleMessage(JSON.parse(event.data));
+      } catch {
+        // Ignore malformed WebSocket messages.
+      }
+    };
+
+    socket.onerror = () => socket.close();
+
+    return () => socket.close();
+  }, [jobId]);
 }

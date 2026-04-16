@@ -15,12 +15,14 @@ const upload = multer({
 });
 
 router.post('/', requireAuth, upload.single('resume'), async (req, res) => {
+  let jobId;
+
   try {
     const { jdText } = req.body;
     if (!jdText?.trim()) return res.status(400).json({ error: 'Job description is required' });
     if (!req.file)       return res.status(400).json({ error: 'PDF resume is required' });
 
-    const jobId  = uuid();
+    jobId        = uuid();
     const s3Key  = `resumes/${req.user.id}/${jobId}.pdf`;
 
     await uploadToS3(s3Key, req.file.buffer, 'application/pdf');
@@ -37,7 +39,15 @@ router.post('/', requireAuth, upload.single('resume'), async (req, res) => {
     res.status(202).json({ jobId, status: 'queued' });
   } catch (err) {
     console.error('Upload error:', err);
-    res.status(500).json({ error: 'Upload failed' });
+
+    if (jobId) {
+      await Job.findByIdAndUpdate(jobId, {
+        status: 'failed',
+        errorMessage: err.message || 'Upload failed before queueing job',
+      });
+    }
+
+    res.status(500).json({ error: err.message || 'Upload failed' });
   }
 });
 

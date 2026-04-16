@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 export default function Login() {
   const { login, register } = useAuth();
@@ -26,26 +26,16 @@ export default function Login() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', background: '#f8fafc',
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0',
-        padding: '2rem', width: '100%', maxWidth: 400,
-      }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 4, textAlign: 'center' }}>
-          ResumeForge AI
-        </h1>
-        <p style={{ textAlign: 'center', color: '#64748b', fontSize: 14, marginBottom: '1.5rem' }}>
+    <div className="auth-shell">
+      <div className="auth-card">
+        <p className="eyebrow">HireForge</p>
+        <h1 className="auth-title">Resume tuning with a deployment-ready workflow.</h1>
+        <p style={{ textAlign: 'left', color: '#6c6152', fontSize: 14, marginBottom: '1.5rem' }}>
           {isRegister ? 'Create your account' : 'Sign in to continue'}
         </p>
 
         {error && (
-          <div style={{
-            background: '#fee2e2', color: '#991b1b', padding: '0.75rem',
-            borderRadius: 8, fontSize: 13, marginBottom: '1rem',
-          }}>
+          <div className="alert alert-error">
             {error}
           </div>
         )}
@@ -81,12 +71,13 @@ export default function Login() {
 }
 
 const inputStyle = {
-  padding: '0.625rem 0.875rem', borderRadius: 8,
-  border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', width: '100%',
+  padding: '0.875rem 0.95rem', borderRadius: 14,
+  border: '1px solid #d8c9b4', fontSize: 14, outline: 'none', width: '100%',
   boxSizing: 'border-box',
+  background: '#fffaf4',
 };
 const btnStyle = {
-  padding: '0.625rem', borderRadius: 8, border: 'none',
-  background: '#2563eb', color: '#fff', fontSize: 14,
-  fontWeight: 500, cursor: 'pointer', marginTop: 4,
+  padding: '0.875rem', borderRadius: 14, border: 'none',
+  background: 'linear-gradient(135deg, #d9692b, #b84f1c)', color: '#fff', fontSize: 14,
+  fontWeight: 700, cursor: 'pointer', marginTop: 4,
 };

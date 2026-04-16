@@ -2,14 +2,32 @@ import os
 import sys
 import json
 import time
+from pathlib import Path
 import boto3
 import fitz          # PyMuPDF
 import pymongo
 from dotenv import load_dotenv
 
-load_dotenv()
+ENV_PATH = Path(__file__).resolve().parent / ".env"
+load_dotenv(ENV_PATH, override=True)
 
 from graph.graph import graph
+
+REQUIRED_ENV = [
+    "MONGODB_URI",
+    "AWS_REGION",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "S3_BUCKET",
+    "SQS_QUEUE_URL",
+    "GROQ_API_KEY",
+    "GROQ_MODEL",
+]
+
+missing_env = [name for name in REQUIRED_ENV if not os.environ.get(name, "").strip()]
+if missing_env:
+    print(f"[worker] Missing env vars: {', '.join(missing_env)}")
+    sys.exit(1)
 
 # ── Clients ───────────────────────────────────────────────────────────────────
 sqs = boto3.client(
@@ -25,8 +43,10 @@ s3 = boto3.client(
     aws_secret_access_key  = os.environ["AWS_SECRET_ACCESS_KEY"],
 )
 
+DB_NAME = os.environ.get("MONGODB_DB", "resumeforge")
+
 mongo  = pymongo.MongoClient(os.environ["MONGODB_URI"])
-db     = mongo["resumeforge"]
+db     = mongo[DB_NAME]
 jobs   = db["jobs"]
 
 QUEUE_URL = os.environ["SQS_QUEUE_URL"]
@@ -98,7 +118,9 @@ def process_job(job_id: str):
 # ── SQS polling loop ──────────────────────────────────────────────────────────
 
 def poll():
-    print("[worker] Started. Polling SQS for jobs...")
+    print(f"[worker] Loaded env from {ENV_PATH}")
+    print(f"[worker] Mongo database: {DB_NAME}")
+    print(f"[worker] Started. Polling SQS for jobs on {QUEUE_URL}")
     while True:
         try:
             resp = sqs.receive_message(
@@ -111,6 +133,7 @@ def poll():
             if not messages:
                 continue   # nothing in queue, loop again
 
+            print(f"[worker] Received {len(messages)} message(s)")
             for msg in messages:
                 body   = json.loads(msg["Body"])
                 job_id = body["jobId"]

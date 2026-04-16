@@ -1,11 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-const icons = {
-  done:       '✓',
-  processing: '◌',
-  queued:     '○',
-};
-
 export default function ProgressFeed({ steps = [], status }) {
   const bottomRef = useRef(null);
 

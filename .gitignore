@@ -9,11 +9,13 @@ Thumbs.db
 # Environment files
 .env
 .env.*
-!.env.example
 **/.env
 **/.env.*
 **/frontend.env
 **/*.local
+!.env.example
+!**/.env.example
+!**/frontend.env.example
 
 # Node / frontend artifacts
 **/node_modules/
