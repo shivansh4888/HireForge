@@ -19,8 +19,6 @@ const requiredEnv = [
   'MONGODB_URI',
   'JWT_SECRET',
   'AWS_REGION',
-  'AWS_ACCESS_KEY_ID',
-  'AWS_SECRET_ACCESS_KEY',
   'S3_BUCKET',
   'SQS_QUEUE_URL',
 ];

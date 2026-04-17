@@ -16,6 +16,8 @@ This project is ready to deploy as three containers:
 - Amazon DocumentDB or MongoDB Atlas for `MONGODB_URI`
 - AWS Secrets Manager for runtime secrets
 
+Ready-to-edit ECS deployment assets live in [`infra/ecs`](/home/shivansh/HireForge/infra/ecs/README.md:1).
+
 ## Required secrets and config
 
 Set these in Secrets Manager or ECS task definitions:
@@ -23,14 +25,17 @@ Set these in Secrets Manager or ECS task definitions:
 - `MONGODB_URI`
 - `JWT_SECRET`
 - `AWS_REGION`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
 - `S3_BUCKET`
 - `SQS_QUEUE_URL`
 - `GROQ_API_KEY`
 - `GROQ_MODEL`
 - `FRONTEND_URL`
 - `PORT=3001`
+
+Notes:
+
+- In ECS, prefer IAM task roles instead of `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
+- The `agent` container now compiles LaTeX PDFs, so its image includes TeX Live.
 
 For the frontend container build:
 
@@ -54,6 +59,14 @@ aws ecr create-repository --repository-name hireforge-agent
 
 Authenticate Docker, tag each image, and push to the matching ECR repository.
 
+Or use:
+
+```bash
+AWS_REGION=ap-south-1 AWS_ACCOUNT_ID=123456789012 IMAGE_TAG=prod-001 \
+VITE_API_URL=https://api.example.com/api \
+bash infra/ecs/build-and-push.sh
+```
+
 ## ECS services
 
 Create three task definitions:
@@ -75,6 +88,12 @@ Recommended desired counts:
 - `backend`: `1` to start, then scale out
 - `agent`: `1` to start, then scale based on queue depth
 
+The repository includes starter task definition templates:
+
+- `infra/ecs/taskdef-frontend.json`
+- `infra/ecs/taskdef-backend.json`
+- `infra/ecs/taskdef-agent.json`
+
 ## Networking notes
 
 - Put ECS services in private subnets where possible.
@@ -91,3 +110,7 @@ Recommended desired counts:
 5. Create ECS task definitions with the correct environment variables.
 6. Create ECS services and attach ALB listeners for frontend and backend.
 7. Verify `/api/health`, registration/login, PDF upload, and SQS worker processing.
+
+## Operational note
+
+Any time you change the LaTeX template or worker logic, rebuild and push the `agent` image, then redeploy the `agent` ECS service.

@@ -14,7 +14,7 @@ export const getAwsCredentials = () => {
   const { accessKeyId, secretAccessKey } = getAwsEnv();
 
   if (!accessKeyId || !secretAccessKey) {
-    throw new Error('AWS credentials are missing or invalid in backend/.env');
+    return undefined;
   }
 
   return { accessKeyId, secretAccessKey };

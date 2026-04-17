@@ -22,8 +22,6 @@ from graph.graph import graph
 REQUIRED_ENV = [
     "MONGODB_URI",
     "AWS_REGION",
-    "AWS_ACCESS_KEY_ID",
-    "AWS_SECRET_ACCESS_KEY",
     "S3_BUCKET",
     "SQS_QUEUE_URL",
     "GROQ_API_KEY",
@@ -35,17 +33,25 @@ if missing_env:
     print(f"[worker] Missing env vars: {', '.join(missing_env)}")
     sys.exit(1)
 
+
+def _aws_client_kwargs():
+    kwargs = {"region_name": os.environ["AWS_REGION"]}
+    access_key_id = os.environ.get("AWS_ACCESS_KEY_ID", "").strip()
+    secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY", "").strip()
+
+    if access_key_id and secret_access_key:
+        kwargs["aws_access_key_id"] = access_key_id
+        kwargs["aws_secret_access_key"] = secret_access_key
+
+    return kwargs
+
 sqs = boto3.client(
     "sqs",
-    region_name=os.environ["AWS_REGION"],
-    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+    **_aws_client_kwargs(),
 )
 s3 = boto3.client(
     "s3",
-    region_name=os.environ["AWS_REGION"],
-    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+    **_aws_client_kwargs(),
 )
 
 DB_NAME = os.environ.get("MONGODB_DB", "resumeforge")
