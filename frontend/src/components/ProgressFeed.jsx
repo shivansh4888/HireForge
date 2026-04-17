@@ -9,35 +9,49 @@ export default function ProgressFeed({ steps = [], status }) {
 
   if (steps.length === 0 && status === 'queued') {
     return (
-      <p style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>
-        Job queued — worker will pick it up shortly...
-      </p>
+      <div className="terminal-card terminal-empty">
+        <div className="terminal-header">
+          <div className="terminal-dots">
+            <span />
+            <span />
+            <span />
+          </div>
+          <span className="terminal-title">agent-log</span>
+        </div>
+        <p className="terminal-queued">Job queued. A worker will pick it up shortly.</p>
+      </div>
     );
   }
 
   return (
-    <div style={{
-      background: '#0f172a', borderRadius: 8, padding: '1rem',
-      fontFamily: 'monospace', fontSize: 13, maxHeight: 220, overflowY: 'auto',
-    }}>
+    <div className="terminal-card">
+      <div className="terminal-header">
+        <div className="terminal-dots">
+          <span />
+          <span />
+          <span />
+        </div>
+        <span className="terminal-title">optimization-log</span>
+      </div>
+
       {steps.map((step, i) => (
-        <div key={i} style={{
-          color: i === steps.length - 1 && status === 'processing' ? '#86efac' : '#94a3b8',
-          marginBottom: 4,
-        }}>
-          <span style={{ marginRight: 8, color: '#4ade80' }}>→</span>
+        <div
+          key={i}
+          className={`terminal-line${i === steps.length - 1 && status === 'processing' ? ' terminal-line-active' : ''}`}
+        >
+          <span className="terminal-icon">{i === steps.length - 1 && status === 'done' ? '✓' : '→'}</span>
           {step}
         </div>
       ))}
       {status === 'processing' && (
-        <div style={{ color: '#fbbf24', marginTop: 4 }}>
-          <span style={{ marginRight: 8 }}>◌</span>
+        <div className="terminal-line terminal-line-processing">
+          <span className="terminal-icon">◌</span>
           Processing...
         </div>
       )}
       {status === 'done' && (
-        <div style={{ color: '#4ade80', marginTop: 4, fontWeight: 500 }}>
-          <span style={{ marginRight: 8 }}>✓</span>
+        <div className="terminal-line terminal-line-success">
+          <span className="terminal-icon">✓</span>
           Complete
         </div>
       )}

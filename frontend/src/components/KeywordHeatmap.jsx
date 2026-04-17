@@ -12,8 +12,8 @@ export default function KeywordHeatmap({ keywordMap }) {
           <h3>Match map</h3>
         </div>
         <div className="keyword-summary">
-          <span>{present.length} present</span>
-          <span>{missing.length} missing</span>
+          <span className="keyword-summary-chip keyword-summary-chip-present">{present.length} present</span>
+          <span className="keyword-summary-chip keyword-summary-chip-missing">{missing.length} missing</span>
         </div>
       </div>
 

@@ -30,15 +30,32 @@ export default function ResultsPanel({ job, jobId, loading, onReset }) {
 
   return (
     <div className="results-layout">
-      <section className="panel status-panel">
+      <section className="panel status-panel run-summary-card">
         <div>
-          <p className="section-label">Run status</p>
+          <div className="run-status-meta">
+            <p className="section-label">Run status</p>
+            <span className={`status-pill status-${job.status}`}>{job.status}</span>
+          </div>
           <h3>{getHeading(job.status)}</h3>
+          <p className="muted">Review match movement, rewrite output, and optimization guidance.</p>
+          <p className="muted">
+            Template: <strong>{formatTemplate(job.templateKind)}</strong>
+            {' · '}
+            Target ATS: <strong>{job.targetScore || 90}</strong>
+          </p>
           <p className="muted mono">{jobId}</p>
         </div>
-        <button type="button" className="ghost-button" onClick={onReset}>
-          New analysis
-        </button>
+
+        <div className="run-summary-actions">
+          {job.generatedResumeUrl && (
+            <a className="primary-button" href={job.generatedResumeUrl} target="_blank" rel="noreferrer">
+              Open Final Resume PDF
+            </a>
+          )}
+          <button type="button" className="ghost-button" onClick={onReset}>
+            New analysis
+          </button>
+        </div>
       </section>
 
       {(job.originalScore != null || job.finalScore != null) && (
@@ -48,12 +65,16 @@ export default function ResultsPanel({ job, jobId, loading, onReset }) {
               <p className="section-label">Score movement</p>
               <h3>ATS performance snapshot</h3>
             </div>
+            <div className="score-delta">
+              <span className="score-delta-label">Net change</span>
+              <strong>{formatDelta(job.originalScore, job.finalScore)}</strong>
+            </div>
           </div>
 
           <div className="score-grid">
-            <ScoreRing score={job.originalScore} label="Original" />
-            <div className="score-arrow">to</div>
-            <ScoreRing score={job.finalScore} label="Optimized" />
+            <ScoreRing score={job.originalScore} label="Before Optimization" tone="before" />
+            <div className="score-arrow">→</div>
+            <ScoreRing score={job.finalScore} label="After Optimization" tone="after" />
           </div>
         </section>
       )}
@@ -70,12 +91,29 @@ export default function ResultsPanel({ job, jobId, loading, onReset }) {
         </section>
       )}
 
+      {job.generatedResumeUrl && (
+        <section className="panel">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Final output</p>
+              <h3>Generated resume in your LaTeX template</h3>
+            </div>
+            <a className="ghost-button" href={job.generatedResumeUrl} target="_blank" rel="noreferrer">
+              Download PDF
+            </a>
+          </div>
+          <p className="muted">
+            This is the final compiled resume PDF using your template layout. The text draft below is only an intermediate artifact.
+          </p>
+        </section>
+      )}
+
       {job.rewrittenResume && (
         <section className="panel">
           <div className="section-heading">
             <div>
-              <p className="section-label">Optimized draft</p>
-              <h3>Ready-to-edit resume rewrite</h3>
+              <p className="section-label">Intermediate draft</p>
+              <h3>Optimization content used to build the PDF</h3>
             </div>
             <button type="button" className="ghost-button" onClick={copyResume}>
               Copy text
@@ -105,6 +143,32 @@ export default function ResultsPanel({ job, jobId, loading, onReset }) {
       )}
     </div>
   );
+}
+
+function formatTemplate(templateKind) {
+  if (templateKind === 'ai') {
+    return 'AI / ML';
+  }
+
+  if (templateKind === 'etc') {
+    return 'Other professional';
+  }
+
+  return 'Software engineering';
+}
+
+function formatDelta(originalScore, finalScore) {
+  if (originalScore == null || finalScore == null) {
+    return 'Pending';
+  }
+
+  const delta = finalScore - originalScore;
+
+  if (delta === 0) {
+    return 'No change';
+  }
+
+  return `${delta > 0 ? '+' : ''}${delta} pts`;
 }
 
 function getHeading(status) {

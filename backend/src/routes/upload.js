@@ -18,9 +18,17 @@ router.post('/', requireAuth, upload.single('resume'), async (req, res) => {
   let jobId;
 
   try {
-    const { jdText } = req.body;
+    const { jdText, templateKind = 'sde', targetScore } = req.body;
     if (!jdText?.trim()) return res.status(400).json({ error: 'Job description is required' });
     if (!req.file)       return res.status(400).json({ error: 'PDF resume is required' });
+    if (!['sde', 'ai', 'etc'].includes(templateKind)) {
+      return res.status(400).json({ error: 'Unsupported resume template' });
+    }
+
+    const normalizedTargetScore = Math.min(
+      100,
+      Math.max(75, Number.parseInt(targetScore, 10) || 90),
+    );
 
     jobId        = uuid();
     const s3Key  = `resumes/${req.user.id}/${jobId}.pdf`;
@@ -32,11 +40,13 @@ router.post('/', requireAuth, upload.single('resume'), async (req, res) => {
       userId:      req.user.id,
       resumeS3Key: s3Key,
       jdText:      jdText.trim(),
+      templateKind,
+      targetScore: normalizedTargetScore,
     });
 
     await enqueueJob(jobId);
 
-    res.status(202).json({ jobId, status: 'queued' });
+    res.status(202).json({ jobId, status: 'queued', templateKind, targetScore: normalizedTargetScore });
   } catch (err) {
     console.error('Upload error:', err);
 

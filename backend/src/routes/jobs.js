@@ -11,13 +11,20 @@ router.get('/:jobId', requireAuth, async (req, res) => {
     const job = await Job.findOne({ _id: req.params.jobId, userId: req.user.id }).lean();
     if (!job) return res.status(404).json({ error: 'Not found' });
 
-    // If done, attach a short-lived pre-signed URL for the original PDF.
-    // If signing fails, return the job anyway instead of crashing the backend.
+    // Attach short-lived pre-signed URLs for available PDFs.
     if (job.status === 'done' && job.resumeS3Key) {
       try {
         job.resumeUrl = await getPresignedUrl(job.resumeS3Key);
       } catch (error) {
         console.error(`Failed to sign resume URL for job ${job._id}:`, error);
+      }
+    }
+
+    if (job.status === 'done' && job.generatedResumeS3Key) {
+      try {
+        job.generatedResumeUrl = await getPresignedUrl(job.generatedResumeS3Key);
+      } catch (error) {
+        console.error(`Failed to sign generated resume URL for job ${job._id}:`, error);
       }
     }
 

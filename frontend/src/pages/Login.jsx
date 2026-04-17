@@ -27,57 +27,72 @@ export default function Login() {
 
   return (
     <div className="auth-shell">
-      <div className="auth-card">
-        <p className="eyebrow">HireForge</p>
-        <h1 className="auth-title">Resume tuning with a deployment-ready workflow.</h1>
-        <p style={{ textAlign: 'left', color: '#6c6152', fontSize: 14, marginBottom: '1.5rem' }}>
-          {isRegister ? 'Create your account' : 'Sign in to continue'}
-        </p>
-
-        {error && (
-          <div className="alert alert-error">
-            {error}
+      <div className="auth-layout">
+        <section className="auth-showcase">
+          <div className="brand-mark">HF</div>
+          <p className="eyebrow">HireForge</p>
+          <h1 className="auth-title">A sharper application workflow for every role you target.</h1>
+          <p className="muted auth-copy">
+            Compare ATS movement, review rewrite suggestions, and keep every resume iteration in a clean workspace.
+          </p>
+          <div className="auth-feature-list">
+            <div className="auth-feature-card">
+              <strong>Structured analysis</strong>
+              <p className="muted">Track each optimization run with clear status, score movement, and rewrite output.</p>
+            </div>
+            <div className="auth-feature-card">
+              <strong>Designed for clarity</strong>
+              <p className="muted">A focused light interface that feels more like a real SaaS product than a demo tool.</p>
+            </div>
           </div>
-        )}
+        </section>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input
-            type="email" placeholder="Email" value={email}
-            onChange={e => setEmail(e.target.value)} required
-            style={inputStyle}
-          />
-          <input
-            type="password" placeholder="Password" value={password}
-            onChange={e => setPassword(e.target.value)} required
-            style={inputStyle}
-          />
-          <button type="submit" disabled={loading} style={btnStyle}>
-            {loading ? 'Please wait...' : isRegister ? 'Create account' : 'Sign in'}
-          </button>
-        </form>
+        <section className="auth-card">
+          <p className="eyebrow">{isRegister ? 'Create account' : 'Welcome back'}</p>
+          <h2 className="auth-form-title">{isRegister ? 'Set up your workspace' : 'Sign in to continue'}</h2>
+          <p className="muted auth-form-copy">
+            {isRegister ? 'Create a new account to start managing resume optimization runs.' : 'Access your dashboard and reopen previous analyses.'}
+          </p>
 
-        <p style={{ textAlign: 'center', fontSize: 13, marginTop: '1rem', color: '#64748b' }}>
-          {isRegister ? 'Already have an account? ' : "Don't have an account? "}
-          <span
-            onClick={() => setIsRegister(!isRegister)}
-            style={{ color: '#2563eb', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            {isRegister ? 'Sign in' : 'Register'}
-          </span>
-        </p>
+          {error && (
+            <div className="alert alert-error">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              className="input-field"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              className="input-field"
+            />
+            <button type="submit" disabled={loading} className="primary-button full-width">
+              {loading ? 'Please wait...' : isRegister ? 'Create account' : 'Sign in'}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            {isRegister ? 'Already have an account? ' : "Don't have an account? "}
+            <span
+              onClick={() => setIsRegister(!isRegister)}
+              className="auth-switch-link"
+            >
+              {isRegister ? 'Sign in' : 'Register'}
+            </span>
+          </p>
+        </section>
       </div>
     </div>
   );
 }
-
-const inputStyle = {
-  padding: '0.875rem 0.95rem', borderRadius: 14,
-  border: '1px solid #d8c9b4', fontSize: 14, outline: 'none', width: '100%',
-  boxSizing: 'border-box',
-  background: '#fffaf4',
-};
-const btnStyle = {
-  padding: '0.875rem', borderRadius: 14, border: 'none',
-  background: 'linear-gradient(135deg, #d9692b, #b84f1c)', color: '#fff', fontSize: 14,
-  fontWeight: 700, cursor: 'pointer', marginTop: 4,
-};

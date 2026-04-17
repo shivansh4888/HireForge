@@ -88,7 +88,7 @@ export default function Dashboard() {
     ));
   });
 
-  async function handleCreateAnalysis({ file, jdText }) {
+  async function handleCreateAnalysis({ file, jdText, templateKind }) {
     setSubmitting(true);
     setError('');
 
@@ -96,11 +96,15 @@ export default function Dashboard() {
       const formData = new FormData();
       formData.append('resume', file);
       formData.append('jdText', jdText);
+      formData.append('templateKind', templateKind);
+      formData.append('targetScore', '90');
 
       const { data } = await api.post('/upload', formData);
       const optimisticJob = {
         _id: data.jobId,
         status: data.status,
+        templateKind: data.templateKind,
+        targetScore: data.targetScore,
         progress: [],
         createdAt: new Date().toISOString(),
       };
@@ -129,87 +133,117 @@ export default function Dashboard() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand-card">
-          <p className="eyebrow">HireForge</p>
-          <h1>Resume intelligence for targeted job applications.</h1>
-          <p className="muted">
-            Upload a resume, map it against a job description, and turn the result into
-            a stronger ATS-ready draft.
-          </p>
+        <div className="sidebar-card sidebar-brand">
+          <div className="brand-mark">HF</div>
+          <div>
+            <p className="eyebrow">HireForge</p>
+            <h1>Resume intelligence for focused job applications.</h1>
+          </div>
         </div>
 
-        <div className="panel sidebar-panel">
-          <div className="sidebar-actions">
-            <div>
-              <p className="section-label">Workspace</p>
-              <strong>{user?.email}</strong>
+        <div className="sidebar-card">
+          <div className="sidebar-section">
+            <p className="section-label">Workspace</p>
+            <div className="workspace-card">
+              <div className="workspace-avatar">
+                {user?.email?.slice(0, 1)?.toUpperCase() || 'H'}
+              </div>
+              <div>
+                <strong>Personal studio</strong>
+                <p className="muted">{user?.email}</p>
+              </div>
             </div>
-            <button type="button" className="ghost-button" onClick={logout}>
+          </div>
+
+          <div className="sidebar-section">
+            <button type="button" className="primary-button full-width" onClick={handleNewAnalysis}>
+              New analysis
+            </button>
+            <button type="button" className="ghost-button full-width" onClick={logout}>
               Sign out
             </button>
           </div>
 
-          <button type="button" className="primary-button full-width" onClick={handleNewAnalysis}>
-            New analysis
-          </button>
-
-          <div className="history-header">
-            <p className="section-label">Recent runs</p>
-            <button type="button" className="text-button" onClick={handleRefresh}>
-              Refresh
-            </button>
-          </div>
-
-          <div className="history-list">
-            {jobs.length === 0 && (
-              <p className="empty-state">Your previous analyses will appear here.</p>
-            )}
-
-            {jobs.map((item) => (
-              <button
-                key={item._id}
-                type="button"
-                className={`history-item${selectedJobId === item._id ? ' active' : ''}`}
-                onClick={() => setSelectedJobId(item._id)}
-              >
-                <div className="history-topline">
-                  <span>{item.status}</span>
-                  <span>{formatDate(item.createdAt)}</span>
-                </div>
-                <strong>{item.finalScore ?? item.originalScore ?? 'Pending'} ATS</strong>
-                <span className="muted mono">{item._id}</span>
+          <div className="sidebar-section">
+            <div className="history-header">
+              <div>
+                <p className="section-label">Recent runs</p>
+                <p className="sidebar-helper">Open a previous optimization session.</p>
+              </div>
+              <button type="button" className="text-button" onClick={handleRefresh}>
+                Refresh
               </button>
-            ))}
+            </div>
+
+            <div className="history-list">
+              {jobs.length === 0 && (
+                <p className="empty-state">Your previous analyses will appear here.</p>
+              )}
+
+              {jobs.map((item) => (
+                <button
+                  key={item._id}
+                  type="button"
+                  className={`history-item${selectedJobId === item._id ? ' active' : ''}`}
+                  onClick={() => setSelectedJobId(item._id)}
+                >
+                  <div className="history-item-accent" />
+                  <div className="history-item-content">
+                    <div className="history-topline">
+                      <span className={`status-pill status-${item.status}`}>{item.status}</span>
+                      <span>{formatDate(item.createdAt)}</span>
+                    </div>
+                    <strong>{item.finalScore ?? item.originalScore ?? 'Pending'} ATS</strong>
+                    <span className="muted mono">{item._id.slice(0, 12)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </aside>
 
       <main className="content">
-        <section className="hero-card">
-          <p className="eyebrow">Analysis Studio</p>
-          <h2>Build a tailored resume package in one place.</h2>
-          <p className="muted">
-            Start a new analysis or reopen an earlier run to review scores, keywords,
-            and rewrite output.
-          </p>
-        </section>
+        <div className="content-frame">
+          <section className="hero-card">
+            <div className="hero-copy">
+              <p className="eyebrow">Analysis Studio</p>
+              <h2>Refine every application with a cleaner, more strategic workflow.</h2>
+              <p className="muted hero-text">
+                Upload a resume, compare ATS movement, track processing steps, and review rewrite guidance
+                in one focused workspace.
+              </p>
+            </div>
 
-        {error && (
-          <div className="alert alert-error">
-            {error}
-          </div>
-        )}
+            <div className="hero-metrics">
+              <div className="hero-metric">
+                <span className="hero-metric-label">Runs</span>
+                <strong>{jobs.length}</strong>
+              </div>
+              <div className="hero-metric">
+                <span className="hero-metric-label">Selected</span>
+                <strong>{selectedJobId ? 'Active' : 'New'}</strong>
+              </div>
+            </div>
+          </section>
 
-        {!selectedJobId ? (
-          <UploadForm onSubmit={handleCreateAnalysis} submitting={submitting} />
-        ) : (
-          <ResultsPanel
-            job={job}
-            jobId={selectedJobId}
-            loading={loadingJob}
-            onReset={handleNewAnalysis}
-          />
-        )}
+          {error && (
+            <div className="alert alert-error">
+              {error}
+            </div>
+          )}
+
+          {!selectedJobId ? (
+            <UploadForm onSubmit={handleCreateAnalysis} submitting={submitting} />
+          ) : (
+            <ResultsPanel
+              job={job}
+              jobId={selectedJobId}
+              loading={loadingJob}
+              onReset={handleNewAnalysis}
+            />
+          )}
+        </div>
       </main>
     </div>
   );

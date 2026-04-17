@@ -124,11 +124,13 @@ def ats_score(state: AgentState) -> AgentState:
 def rewrite_resume(state: AgentState) -> AgentState:
     iteration = state.get("iteration", 0) + 1
     progress  = _log(state, f"Rewriting resume (pass {iteration})...")
+    target_score = state.get("target_score", 90)
+    template_kind = state.get("template_kind", "sde").upper()
 
     prompt = f"""
 You are an expert ATS resume optimizer and professional resume writer.
 
-TASK: Rewrite the candidate's resume to score 90+ on ATS for the target job.
+TASK: Rewrite the candidate's resume to score at least {target_score} on ATS for the target job.
 
 STRICT RULES:
 1. Never fabricate experience, companies, dates, or degrees. 
@@ -137,6 +139,8 @@ STRICT RULES:
 4. Quantify achievements where the original has numbers.
 5. Incorporate ALL missing keywords from the gaps list naturally into existing bullets.
 6. Keep the same overall structure: Summary → Skills → Experience → Education.
+7. Tailor tone and wording for the selected template family: {template_kind}.
+8. Make the output complete enough to render directly into a polished one-page or two-page resume PDF.
 
 MISSING KEYWORDS TO INCORPORATE:
 {json.dumps(state["gaps"], indent=2)}
@@ -146,7 +150,7 @@ TARGET ROLE: {state["parsed_jd"].get("role_title", "Not specified")}
 ORIGINAL RESUME SECTIONS:
 {json.dumps(state["parsed_resume"], indent=2)}
 
-OUTPUT: Write the full rewritten resume as clean plain text, ready to copy-paste.
+OUTPUT: Write the full rewritten resume as clean plain text, ready to turn into a final resume PDF.
 Start directly with the resume content. No preamble, no explanation.
 """
 
@@ -248,7 +252,10 @@ RESUME:
 
     final_score, _, _ = compute_ats_score(updated_resume, state["parsed_jd"])
 
-    msg = f"Final ATS score: {final_score}/100 (was {state['ats_score']}/100)."
+    msg = (
+        f"Final ATS score: {final_score}/100 "
+        f"(target {state.get('target_score', 90)}, was {state['ats_score']}/100)."
+    )
     return {
         **state,
         "final_score": final_score,
