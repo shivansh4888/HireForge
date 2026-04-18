@@ -18,14 +18,15 @@ export default function Dashboard() {
   const loadJobs = useCallback(async (preferredJobId) => {
     try {
       const { data } = await api.get('/jobs');
-      setJobs(data);
+      const nextJobs = normalizeJobs(data);
+      setJobs(nextJobs);
       if (preferredJobId) {
         setSelectedJobId(preferredJobId);
         return;
       }
-      setSelectedJobId((current) => current || data[0]?._id || null);
+      setSelectedJobId((current) => current || nextJobs[0]?._id || null);
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not load previous analyses.');
+      setError(extractApiError(err, 'Could not load previous analyses.'));
     }
   }, []);
 
@@ -38,10 +39,10 @@ export default function Dashboard() {
     setLoadingJob(true);
     try {
       const { data } = await api.get(`/jobs/${jobId}`);
-      setJob(data);
+      setJob(normalizeJob(data));
       setError('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not load this analysis.');
+      setError(extractApiError(err, 'Could not load this analysis.'));
     } finally {
       setLoadingJob(false);
     }
@@ -63,9 +64,10 @@ export default function Dashboard() {
     const interval = setInterval(async () => {
       try {
         const { data } = await api.get(`/jobs/${selectedJobId}`);
-        setJob(data);
+        const nextJob = normalizeJob(data);
+        setJob(nextJob);
 
-        if (!['queued', 'processing'].includes(data.status)) {
+        if (!['queued', 'processing'].includes(nextJob?.status)) {
           loadJobs(selectedJobId);
         }
       } catch {
@@ -77,13 +79,14 @@ export default function Dashboard() {
   }, [jobStatus, loadJobs, selectedJobId]);
 
   useWebSocket(selectedJobId, (message) => {
-    if (!message?.progress?.length) {
+    const progress = normalizeProgress(message?.progress);
+    if (progress.length === 0) {
       return;
     }
 
     setJob((current) => (
       current
-        ? { ...current, progress: message.progress }
+        ? { ...current, progress }
         : current
     ));
   });
@@ -111,9 +114,9 @@ export default function Dashboard() {
 
       setSelectedJobId(data.jobId);
       setJob(optimisticJob);
-      setJobs((current) => [optimisticJob, ...current.filter((item) => item._id !== data.jobId)]);
+      setJobs((current) => [optimisticJob, ...normalizeJobs(current).filter((item) => item._id !== data.jobId)]);
     } catch (err) {
-      setError(err.response?.data?.error || 'Upload failed. Please try again.');
+      setError(extractApiError(err, 'Upload failed. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -247,6 +250,45 @@ export default function Dashboard() {
       </main>
     </div>
   );
+}
+
+function normalizeJobs(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.jobs)) {
+    return payload.jobs;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  return [];
+}
+
+function normalizeProgress(progress) {
+  return Array.isArray(progress) ? progress : [];
+}
+
+function normalizeJob(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null;
+  }
+
+  return {
+    ...payload,
+    progress: normalizeProgress(payload.progress),
+    suggestions: Array.isArray(payload.suggestions) ? payload.suggestions : [],
+    keywordMap: payload.keywordMap && typeof payload.keywordMap === 'object' && !Array.isArray(payload.keywordMap)
+      ? payload.keywordMap
+      : {},
+  };
+}
+
+function extractApiError(err, fallback) {
+  return err.response?.data?.error || err.message || fallback;
 }
 
 function formatDate(value) {

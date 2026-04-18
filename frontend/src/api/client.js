@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_BASE_URL = resolveApiBaseUrl();
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL: API_BASE_URL,
 });
 
 api.interceptors.request.use((config) => {
@@ -23,3 +25,18 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+function resolveApiBaseUrl() {
+  const configuredUrl = import.meta.env.VITE_API_URL?.trim();
+  const fallbackUrl = '/api';
+
+  if (!configuredUrl) {
+    return fallbackUrl;
+  }
+
+  if (/^https?:\/\//i.test(configuredUrl) || configuredUrl.startsWith('/')) {
+    return configuredUrl;
+  }
+
+  return fallbackUrl;
+}

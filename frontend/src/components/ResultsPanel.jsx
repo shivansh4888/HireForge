@@ -4,6 +4,12 @@ import ScoreRing from './ScoreRing';
 import SuggestionCards from './SuggestionCards';
 
 export default function ResultsPanel({ job, jobId, loading, onReset }) {
+  const progress = Array.isArray(job?.progress) ? job.progress : [];
+  const suggestions = Array.isArray(job?.suggestions) ? job.suggestions : [];
+  const keywordMap = job?.keywordMap && typeof job.keywordMap === 'object' && !Array.isArray(job.keywordMap)
+    ? job.keywordMap
+    : null;
+
   async function copyResume() {
     if (!job?.rewrittenResume) {
       return;
@@ -79,7 +85,7 @@ export default function ResultsPanel({ job, jobId, loading, onReset }) {
         </section>
       )}
 
-      {(job.status === 'queued' || job.status === 'processing' || job.progress?.length > 0) && (
+      {(job.status === 'queued' || job.status === 'processing' || progress.length > 0) && (
         <section className="panel">
           <div className="section-heading">
             <div>
@@ -87,7 +93,7 @@ export default function ResultsPanel({ job, jobId, loading, onReset }) {
               <h3>Current processing timeline</h3>
             </div>
           </div>
-          <ProgressFeed steps={job.progress || []} status={job.status} />
+          <ProgressFeed steps={progress} status={job.status} />
         </section>
       )}
 
@@ -124,15 +130,15 @@ export default function ResultsPanel({ job, jobId, loading, onReset }) {
         </section>
       )}
 
-      {job.keywordMap && Object.keys(job.keywordMap).length > 0 && (
+      {keywordMap && Object.keys(keywordMap).length > 0 && (
         <section className="panel">
-          <KeywordHeatmap keywordMap={job.keywordMap} />
+          <KeywordHeatmap keywordMap={keywordMap} />
         </section>
       )}
 
-      {job.suggestions?.length > 0 && (
+      {suggestions.length > 0 && (
         <section className="panel">
-          <SuggestionCards suggestions={job.suggestions} />
+          <SuggestionCards suggestions={suggestions} />
         </section>
       )}
 
